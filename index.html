@@ -172,6 +172,17 @@ textarea{min-height:100px;resize:vertical}
 }
 .print-report-header{display:none}
 .print-only{display:none}
+
+/* QR CARD FIX */
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin-top:16px}
+.qr-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;text-align:center;break-inside:avoid}
+.qr-image{display:block;width:170px;height:170px;object-fit:contain;margin:10px auto;border:6px solid #fff}
+@media print{
+  .qr-grid{grid-template-columns:repeat(2,1fr)!important;gap:10mm!important}
+  .qr-card{border:1px solid #98a2b3;border-radius:4px}
+  .qr-image{width:130px;height:130px}
+}
+
 </style>
 </head>
 
@@ -448,6 +459,35 @@ textarea{min-height:100px;resize:vertical}
         </div>
 
       </div>
+    </section>
+
+    <section id="page-qr" class="page hide">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin-bottom:4px">Kartu QR Siswa</h2>
+            <div class="user">Buat dan cetak kartu QR untuk siswa aktif.</div>
+          </div>
+          <button class="btn dark no-print" onclick="printQRCards()">Cetak Kartu QR</button>
+        </div>
+
+        <div class="two grid no-print" style="margin-top:15px">
+          <div>
+            <label>Cari Siswa</label>
+            <input id="qrSearch" placeholder="Nama, NISN, atau ID" oninput="renderQRStudents()">
+          </div>
+          <div>
+            <label>Kelas</label>
+            <select id="qrClass" onchange="renderQRStudents()">
+              <option value="">Semua Kelas</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="qrStatus" class="no-print" style="margin-top:10px;color:#667085;font-size:12px"></div>
+      </div>
+
+      <div id="qrGrid" class="qr-grid"></div>
     </section>
 
     <section id="page-display" class="page hide">
@@ -737,6 +777,7 @@ function openPage(name){
     scan:'Scan QR',
     students:'Data Siswa',
     rekap:'Rekap Absensi',
+    qr:'Kartu QR',
     display:'Layar Siswa',
     qr:'Kartu QR',
     settings:'Pengaturan',
@@ -754,6 +795,7 @@ function openPage(name){
   if(name==='dashboard')loadDashboard();
   if(name==='rekap')loadFullReport();
   if(name==='logs')loadLogs();
+  if(name==='qr')initQRPage();
 
   if(name==='display'){
     $('displaySchool').textContent=
@@ -1721,49 +1763,100 @@ async function loadMonthly(){
 /* =========================
    QR CARD
 ========================= */
-function generateQR(){
-  $('qrGrid').innerHTML='';
+function initQRPage(){
+  const select=$('qrClass');
+  if(!select)return;
 
-  APP.students
-    .filter(s=>s.status==='AKTIF')
-    .forEach(s=>{
-      const card=
-        document.createElement('div');
+  const classes=[...new Set(
+    APP.students
+      .filter(s=>String(s.status||'').toUpperCase()!=='NONAKTIF')
+      .map(s=>String(s.kelas||'').trim())
+      .filter(Boolean)
+  )].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
 
-      card.className='qr-card';
+  select.innerHTML='<option value="">Semua Kelas</option>'+
+    classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
-      card.innerHTML=`
-        <strong>
-          SMP NEGERI 3 KALIPARE
-        </strong>
+  renderQRStudents();
+}
 
-        <div class="qr"></div>
+function renderQRStudents(){
+  const grid=$('qrGrid');
+  if(!grid)return;
 
-        <strong>
-          ${esc(s.nama)}
-        </strong>
+  const q=String($('qrSearch')?.value||'').trim().toLowerCase();
+  const kelas=String($('qrClass')?.value||'');
 
+  const students=APP.students.filter(s=>{
+    if(String(s.status||'').toUpperCase()==='NONAKTIF')return false;
+
+    const text=[
+      s.id,s.nisn,s.nama,s.kelas,s.rombel
+    ].join(' ').toLowerCase();
+
+    return (!q||text.includes(q)) &&
+      (!kelas||String(s.kelas||'')===kelas);
+  });
+
+  const list=students.slice(0,100);
+
+  if($('qrStatus')){
+    $('qrStatus').textContent=
+      students.length>100
+        ? `Menampilkan 100 dari ${students.length} siswa. Gunakan pencarian untuk mempersempit.`
+        : `${students.length} siswa ditampilkan.`;
+  }
+
+  if(!list.length){
+    grid.innerHTML=`
+      <div class="card" style="grid-column:1/-1;text-align:center">
+        Tidak ada siswa yang sesuai.
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML=list.map(s=>{
+    const data=encodeURIComponent(String(s.id));
+    const qrUrl=
+      'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+data;
+
+    return `
+      <div class="qr-card">
+        <strong>SMP NEGERI 3 KALIPARE</strong>
+        <img class="qr-image"
+          src="${qrUrl}"
+          alt="QR ${esc(s.nama)}"
+          loading="lazy">
+        <strong>${esc(s.nama)}</strong>
         <div class="small">
-          NISN ${esc(s.nisn)}<br>
-          Kelas ${esc(s.kelas)}
-          ${esc(s.rombel)}<br>
+          NISN ${esc(s.nisn||'-')}<br>
+          Kelas ${esc(s.kelas||'-')} ${esc(s.rombel||'')}<br>
           ID ${esc(s.id)}
         </div>
-      `;
-
-      $('qrGrid')
-        .appendChild(card);
-
-      new QRCode(
-        card.querySelector('.qr'),
-        {
-          text:s.id,
-          width:150,
-          height:150
-        }
-      );
-    });
+      </div>
+    `;
+  }).join('');
 }
+
+function printQRCards(){
+  const grid=$('qrGrid');
+
+  if(!grid || !grid.children.length){
+    notify('Tidak ada kartu QR untuk dicetak.');
+    return;
+  }
+
+  const images=[...grid.querySelectorAll('img')];
+
+  Promise.all(images.map(img=>{
+    if(img.complete)return Promise.resolve();
+    return new Promise(resolve=>{
+      img.addEventListener('load',resolve,{once:true});
+      img.addEventListener('error',resolve,{once:true});
+    });
+  })).finally(()=>window.print());
+}
+
 
 /* =========================
    STUDENT DISPLAY
