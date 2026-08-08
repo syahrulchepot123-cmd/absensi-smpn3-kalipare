@@ -598,35 +598,14 @@ async function onQrDetected(decodedText){
 
   await stopCamera();
 
-  busy(true);
-
   try{
-    const result=
-      await authCall(
-        'student',
-        {id:decodedText}
-      );
-
-    if(!result.success){
-      notify(result.message);
-      startCamera();
-      return;
-    }
-
-    APP.currentStudent = result.student;
-
-    showScannedStudent(result.student);
-
-    // Langsung simpan sebagai HADIR setelah QR valid.
-    await saveAttendance();
+    // Satu request saja: QR -> backend -> simpan HADIR.
+    // Backend mencari data siswa dari cache dan langsung menulis absensi.
+    await saveAttendance(decodedText);
   }catch(e){
     notify(e.message);
   }finally{
-    busy(false);
-    setTimeout(
-      ()=>APP.scanBusy=false,
-      1000
-    );
+    // saveAttendance() mengatur kapan scanner siap menerima QR berikutnya.
   }
 }
 
@@ -648,17 +627,33 @@ function showScannedStudent(s){
  * QR berhasil terbaca -> otomatis mencatat HADIR.
  * Tidak ada tombol konfirmasi dan tidak ada prompt keterangan.
  */
-async function saveAttendance(){
-  if(!APP.currentStudent || APP.scanBusy) return;
+async function saveAttendance(qrId){
+  if(!qrId || APP.scanBusy) return;
 
-  const student = APP.currentStudent;
-  busy(true);
+  APP.scanBusy = true;
+
+  // Feedback langsung, tanpa menunggu server.
+  $('scanCard').classList.remove('hidden');
+  $('scanCard').innerHTML = `
+    <div style="text-align:center;padding:22px 12px">
+      <div style="
+        width:52px;height:52px;margin:0 auto 10px;
+        display:grid;place-items:center;border-radius:50%;
+        background:#eff8ff;color:#175cd3;
+        font-size:24px;font-weight:900;
+      ">⌛</div>
+      <h2 style="margin:5px 0">Menyimpan absensi...</h2>
+      <div style="color:#667085;font-size:13px">
+        QR berhasil terbaca.
+      </div>
+    </div>
+  `;
 
   try{
     const result = await authCall(
       'attendance',
       {
-        id: student.id,
+        id: qrId,
         status: 'HADIR',
         keterangan: 'Absensi QR'
       }
@@ -666,58 +661,48 @@ async function saveAttendance(){
 
     if(!result.success){
       showScanMessage(
-        'DUPLIKAT / GAGAL',
+        result.duplicate ? 'SUDAH ABSEN' : 'GAGAL',
         result.message || 'Absensi gagal dicatat.',
         false
       );
 
-      APP.currentStudent = null;
-
-      // Siap scan kembali setelah pesan tampil.
-      setTimeout(async ()=>{
+      setTimeout(async()=>{
         $('scanCard').classList.add('hidden');
+        APP.scanBusy=false;
         await startCamera();
-      }, 1800);
+      },1200);
 
       return;
     }
 
-    // Berhasil: tampilkan nama, status, dan jam.
     showScanMessage(
       'ABSEN BERHASIL',
-      `${result.student.nama}`,
+      result.student.nama,
       true,
       result.status,
       result.jam
     );
 
-    APP.currentStudent = null;
-
-    // Refresh dashboard tanpa mengganggu pesan sukses.
     loadDashboard();
 
-    // Setelah 1,8 detik scanner otomatis aktif lagi.
-    setTimeout(async ()=>{
+    setTimeout(async()=>{
       $('scanCard').classList.add('hidden');
+      APP.scanBusy=false;
       await startCamera();
-    }, 1800);
+    },1200);
 
   }catch(e){
     showScanMessage(
       'GAGAL',
-      e.message || 'Terjadi kesalahan saat menyimpan absensi.',
+      e.message || 'Koneksi ke server gagal.',
       false
     );
 
-    APP.currentStudent = null;
-
-    setTimeout(async ()=>{
+    setTimeout(async()=>{
       $('scanCard').classList.add('hidden');
+      APP.scanBusy=false;
       await startCamera();
-    }, 1800);
-
-  }finally{
-    busy(false);
+    },1500);
   }
 }
 
