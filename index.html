@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#155eef">
-<title>Absensi QR - SMP Negeri 3 Kalipare</title>
+<!-- ABSENSI QR BUILD: 2026-08-08-FINAL-OPENPAGE-FIX -->
+  <title>Absensi QR - SMP Negeri 3 Kalipare</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -752,22 +753,58 @@ async function boot(){
 }
 
 function openPage(name){
+  const target=document.getElementById('page-'+name);
+
+  // Defensive guard: never hide the whole application when a page
+  // is missing because an old/cached index.html is being served.
+  if(!target){
+    console.error(
+      '[ABSENSI QR] Halaman tidak ditemukan: page-'+name+
+      '. Pastikan seluruh index.html versi terbaru sudah di-upload ke GitHub Pages.'
+    );
+
+    const dashboard=document.getElementById('page-dashboard');
+
+    if(dashboard){
+      document
+        .querySelectorAll('.page')
+        .forEach(el=>el.classList.add('hide'));
+
+      dashboard.classList.remove('hide');
+
+      const title=document.getElementById('pageTitle');
+      if(title)title.textContent='Dashboard';
+
+      document
+        .querySelectorAll('.nav button')
+        .forEach(el=>el.classList.remove('active'));
+
+      const dashboardNav=[...
+        document.querySelectorAll('.nav button')
+      ].find(btn=>
+        btn.getAttribute('onclick')==="openPage('dashboard')"
+      );
+
+      if(dashboardNav)dashboardNav.classList.add('active');
+    }
+
+    return false;
+  }
+
   document
     .querySelectorAll('.page')
     .forEach(el=>el.classList.add('hide'));
 
-  $('page-'+name)
-    .classList.remove('hide');
+  target.classList.remove('hide');
 
   document
     .querySelectorAll('.nav button')
     .forEach(el=>el.classList.remove('active'));
 
-  const nav=[
-    ...document.querySelectorAll('.nav button')
+  const nav=[...
+    document.querySelectorAll('.nav button')
   ].find(btn=>
-    btn.getAttribute('onclick')===
-    `openPage('${name}')`
+    btn.getAttribute('onclick')===`openPage('${name}')`
   );
 
   if(nav)nav.classList.add('active');
@@ -779,12 +816,12 @@ function openPage(name){
     rekap:'Rekap Absensi',
     qr:'Kartu QR',
     display:'Layar Siswa',
-    qr:'Kartu QR',
     settings:'Pengaturan',
     logs:'Log Aktivitas'
   };
 
-  $('pageTitle').textContent=titles[name];
+  const title=document.getElementById('pageTitle');
+  if(title)title.textContent=titles[name]||'Absensi QR';
 
   if(name==='scan'){
     startCamera();
@@ -798,14 +835,21 @@ function openPage(name){
   if(name==='qr')initQRPage();
 
   if(name==='display'){
-    $('displaySchool').textContent=
-      APP.settings.NAMA_SEKOLAH||
-      'SMP NEGERI 3 KALIPARE';
+    const displaySchool=document.getElementById('displaySchool');
+
+    if(displaySchool){
+      displaySchool.textContent=
+        APP.settings.NAMA_SEKOLAH||
+        'SMP NEGERI 3 KALIPARE';
+    }
+
     startDisplayPolling();
     loadLiveDisplay();
   }else{
     stopDisplayPolling();
   }
+
+  return true;
 }
 
 /* =========================
