@@ -51,6 +51,7 @@ textarea{min-height:100px;resize:vertical}
 .scanner-card{max-width:620px;margin:0 auto}.camera-status{padding:12px;border-radius:12px;background:#f2f4f7;color:#475467;margin-bottom:12px;font-size:13px}.camera-status.ok{background:#ecfdf3;color:#027a48}.camera-status.error{background:#fef3f2;color:#b42318}
 #reader{width:100%;overflow:hidden;border-radius:16px;background:#101828;min-height:100px}#reader video{width:100%!important;border-radius:16px}
 .scan-result{margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
+.scan-success{animation:scanPop .25s ease-out}@keyframes scanPop{from{transform:scale(.96);opacity:.4}to{transform:scale(1);opacity:1}}
 .qr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .qr-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;text-align:center}
 .qr-card .qr{display:flex;justify-content:center;margin:10px 0}
@@ -155,7 +156,7 @@ textarea{min-height:100px;resize:vertical}
         </div>
         <div id="reader"></div>
         <div class="scan-result">
-          Pastikan aplikasi dibuka melalui HTTPS dan izinkan akses kamera.
+          QR terbaca → otomatis HADIR → tampil nama & jam → scanner aktif kembali.
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
           <button class="btn primary" onclick="startCamera()">Mulai Kamera</button>
@@ -612,12 +613,12 @@ async function onQrDetected(decodedText){
       return;
     }
 
-    APP.currentStudent=
-      result.student;
+    APP.currentStudent = result.student;
 
-    showScannedStudent(
-      result.student
-    );
+    showScannedStudent(result.student);
+
+    // Langsung simpan sebagai HADIR setelah QR valid.
+    await saveAttendance();
   }catch(e){
     notify(e.message);
   }finally{
@@ -633,87 +634,179 @@ function showScannedStudent(s){
   $('scanCard').classList.remove('hidden');
 
   $('scanCard').innerHTML=`
-    <h2>${esc(s.nama)}</h2>
-    <div class="user">
-      NISN ${esc(s.nisn)}
-      • Kelas ${esc(s.kelas)}
-      ${esc(s.rombel)}
-    </div>
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px">
-      <button class="btn success"
-        onclick="saveAttendance('HADIR')">
-        HADIR
-      </button>
-
-      <button class="btn warning"
-        onclick="saveAttendance('IZIN')">
-        IZIN
-      </button>
-
-      <button class="btn light"
-        onclick="saveAttendance('SAKIT')">
-        SAKIT
-      </button>
-
-      <button class="btn danger"
-        onclick="saveAttendance('ALPA')">
-        ALPA
-      </button>
-
-      <button class="btn dark"
-        onclick="openWhatsApp('${esc(s.id)}')">
-        WhatsApp Orang Tua
-      </button>
+    <div style="text-align:center;padding:8px 4px">
+      <div style="font-size:42px;line-height:1;margin-bottom:10px">✓</div>
+      <h2 style="margin-bottom:6px">Memproses Absensi...</h2>
+      <div class="user">
+        ${esc(s.nama)} • Kelas ${esc(s.kelas)} ${esc(s.rombel)}
+      </div>
     </div>
   `;
 }
 
-async function saveAttendance(status){
-  if(!APP.currentStudent)return;
+/*
+ * QR berhasil terbaca -> otomatis mencatat HADIR.
+ * Tidak ada tombol konfirmasi dan tidak ada prompt keterangan.
+ */
+async function saveAttendance(){
+  if(!APP.currentStudent || APP.scanBusy) return;
 
-  const keterangan=
-    prompt(
-      'Keterangan (opsional):',
-      ''
-    )||'';
-
+  const student = APP.currentStudent;
   busy(true);
 
   try{
-    const result=
-      await authCall(
-        'attendance',
-        {
-          id:APP.currentStudent.id,
-          status:status,
-          keterangan:keterangan
-        }
-      );
+    const result = await authCall(
+      'attendance',
+      {
+        id: student.id,
+        status: 'HADIR',
+        keterangan: 'Absensi QR'
+      }
+    );
 
     if(!result.success){
-      notify(result.message);
+      showScanMessage(
+        'DUPLIKAT / GAGAL',
+        result.message || 'Absensi gagal dicatat.',
+        false
+      );
+
+      APP.currentStudent = null;
+
+      // Siap scan kembali setelah pesan tampil.
+      setTimeout(async ()=>{
+        $('scanCard').classList.add('hidden');
+        await startCamera();
+      }, 1800);
+
       return;
     }
 
-    notify(
-      result.student.nama+
-      '\\nStatus: '+
-      result.status+
-      '\\nJam: '+
+    // Berhasil: tampilkan nama, status, dan jam.
+    showScanMessage(
+      'ABSEN BERHASIL',
+      `${result.student.nama}`,
+      true,
+      result.status,
       result.jam
     );
 
-    APP.currentStudent=null;
-    $('scanCard').classList.add('hidden');
+    APP.currentStudent = null;
 
-    await loadDashboard();
-    startCamera();
+    // Refresh dashboard tanpa mengganggu pesan sukses.
+    loadDashboard();
+
+    // Setelah 1,8 detik scanner otomatis aktif lagi.
+    setTimeout(async ()=>{
+      $('scanCard').classList.add('hidden');
+      await startCamera();
+    }, 1800);
+
   }catch(e){
-    notify(e.message);
+    showScanMessage(
+      'GAGAL',
+      e.message || 'Terjadi kesalahan saat menyimpan absensi.',
+      false
+    );
+
+    APP.currentStudent = null;
+
+    setTimeout(async ()=>{
+      $('scanCard').classList.add('hidden');
+      await startCamera();
+    }, 1800);
+
   }finally{
     busy(false);
   }
+}
+
+function showScanMessage(title, name, success, status='', jam=''){
+  $('scanCard').classList.remove('hidden');
+
+  const icon = success ? '✓' : '!';
+  const color = success ? '#039855' : '#d92d20';
+  const bg = success ? '#ecfdf3' : '#fef3f2';
+
+  $('scanCard').innerHTML = `
+    <div style="
+      text-align:center;
+      padding:22px 12px;
+      border-radius:16px;
+      background:${bg};
+      border:1px solid ${success ? '#abefc6' : '#fecdca'};
+    ">
+      <div style="
+        width:58px;
+        height:58px;
+        margin:0 auto 12px;
+        display:grid;
+        place-items:center;
+        border-radius:50%;
+        background:${color};
+        color:#fff;
+        font-size:32px;
+        font-weight:900;
+      ">${icon}</div>
+
+      <div style="
+        color:${color};
+        font-size:13px;
+        font-weight:900;
+        letter-spacing:.05em;
+      ">${esc(title)}</div>
+
+      <h2 style="margin:6px 0 4px">
+        ${esc(name)}
+      </h2>
+
+      ${
+        success
+        ? `
+          <div style="
+            font-size:15px;
+            font-weight:800;
+            margin-top:8px;
+          ">
+            ${esc(status)}
+            • Pukul ${esc(jam)}
+          </div>
+
+          <div style="
+            margin-top:12px;
+            color:#475467;
+            font-size:13px;
+          ">
+            ✓ Data berhasil disimpan
+          </div>
+
+          <div style="
+            margin-top:5px;
+            color:#667085;
+            font-size:12px;
+          ">
+            Siap melakukan scan berikutnya...
+          </div>
+        `
+        : `
+          <div style="
+            margin-top:12px;
+            color:#b42318;
+            font-size:13px;
+          ">
+            ${esc(name)}
+          </div>
+          <div style="
+            margin-top:6px;
+            color:#667085;
+            font-size:12px;
+          ">
+            Siap melakukan scan berikutnya...
+          </div>
+        `
+      }
+    </div>
+  `;
 }
 
 /* =========================
