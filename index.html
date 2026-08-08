@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#155eef">
+<title>Absensi QR - SMP Negeri 3 Kalipare</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+:root{
+ --primary:#155eef;--primary2:#0f4bd8;--navy:#101828;--bg:#f4f7fb;
+ --card:#fff;--text:#101828;--muted:#667085;--line:#e4e7ec;
+ --green:#039855;--yellow:#f79009;--red:#d92d20;--blue:#175cd3;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.app{min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:250px;background:var(--navy);color:#fff;padding:20px;z-index:20}
+.logo{font-size:19px;font-weight:900;line-height:1.25;margin-bottom:22px}
+.logo span{display:block;color:#98a2b3;font-size:11px;font-weight:500;margin-top:5px}
+.nav button{width:100%;border:0;background:transparent;color:#d0d5dd;text-align:left;border-radius:10px;padding:12px;margin:3px 0;font-weight:700}
+.nav button:hover,.nav button.active{background:#194185;color:#fff}
+.main{margin-left:250px;min-height:100vh;padding:24px;max-width:1600px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}
+.topbar h1{margin:0;font-size:26px}
+.user{font-size:12px;color:var(--muted);margin-top:4px}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:800}
+.primary{background:var(--primary);color:#fff}.dark{background:#1d2939;color:#fff}
+.success{background:var(--green);color:#fff}.danger{background:var(--red);color:#fff}
+.warning{background:var(--yellow);color:#fff}.light{background:#eff8ff;color:#175cd3}
+.gray{background:#f2f4f7;color:#344054}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 5px 20px rgba(16,24,40,.04)}
+.grid{display:grid;gap:14px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stats{grid-template-columns:repeat(6,minmax(0,1fr))}
+.stat{border:1px solid var(--line);border-radius:15px;padding:16px;background:#fff}
+.stat b{display:block;font-size:29px;line-height:1.2}.stat span{display:block;color:var(--muted);font-size:12px;margin-top:5px}
+h2,h3{margin-top:0}
+label{display:block;font-size:12px;font-weight:800;color:#475467;margin-bottom:5px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px #dbe8ff}
+textarea{min-height:100px;resize:vertical}
+.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;font-size:13px}.table th,.table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.table th{background:#f9fafb}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:900}
+.badge.hadir{background:#ecfdf3;color:#027a48}.badge.terlambat{background:#fffaeb;color:#b54708}.badge.izin{background:#fffaeb;color:#b54708}.badge.sakit{background:#eff8ff;color:#175cd3}.badge.alpa{background:#fef3f2;color:#b42318}
+.page{display:block}.page.hide{display:none}
+.scanner-card{max-width:620px;margin:0 auto}.camera-status{padding:12px;border-radius:12px;background:#f2f4f7;color:#475467;margin-bottom:12px;font-size:13px}.camera-status.ok{background:#ecfdf3;color:#027a48}.camera-status.error{background:#fef3f2;color:#b42318}
+#reader{width:100%;overflow:hidden;border-radius:16px;background:#101828;min-height:100px}#reader video{width:100%!important;border-radius:16px}
+.scan-result{margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
+.qr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.qr-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;text-align:center}
+.qr-card .qr{display:flex;justify-content:center;margin:10px 0}
+.qr-card strong{display:block}.small{font-size:11px;color:var(--muted);line-height:1.5}
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:60;display:none;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.modalbox{width:min(680px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:20px}
+.loading{position:fixed;inset:0;background:rgba(255,255,255,.78);z-index:100;display:none;place-items:center}.loading.show{display:grid}
+.spinner{width:44px;height:44px;border:5px solid #dbe8ff;border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#155eef,#101828)}
+.login-box{width:min(420px,100%);background:#fff;border-radius:22px;padding:26px;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.login-box h1{margin:0 0 5px}.login-box p{color:var(--muted)}
+.setup{background:#fff8e6;border:1px solid #fedf89;color:#7a2e0b;border-radius:12px;padding:12px;font-size:12px;margin-bottom:15px}
+.mobile-nav{display:none}
+@media(max-width:1050px){
+ .sidebar{display:none}.main{margin:0;padding:15px 15px 80px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.qr-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.mobile-nav{display:flex;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:30}
+ .mobile-nav button{flex:1;border:0;background:#fff;padding:10px 4px;font-size:11px;font-weight:800}
+}
+@media(max-width:650px){
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.qr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.topbar h1{font-size:21px}.card{padding:14px}
+}
+@media print{
+ .sidebar,.topbar,.mobile-nav,.no-print{display:none!important}.main{margin:0;padding:0}.card{box-shadow:none}.qr-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+
+<body>
+
+<div id="loginView" class="login">
+  <div class="login-box">
+    <h1>Absensi QR</h1>
+    <p>SMP Negeri 3 Kalipare</p>
+    <div id="setupBox" class="setup hidden">
+      Masukkan URL Web App Apps Script terlebih dahulu. URL dapat diisi pada kotak API di bawah.
+    </div>
+    <label>URL API Apps Script</label>
+    <input id="apiInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <button class="btn gray" style="width:100%;margin-bottom:12px" onclick="saveApi()">Simpan URL API</button>
+    <label>Username</label>
+    <input id="loginUser" value="admin" autocomplete="username">
+    <label>Password</label>
+    <input id="loginPass" type="password" value="admin123" autocomplete="current-password">
+    <button class="btn primary" style="width:100%" onclick="login()">Masuk</button>
+    <div id="loginMsg" style="font-size:12px;color:#d92d20;margin-top:10px"></div>
+  </div>
+</div>
+
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="logo">
+      ABSENSI QR
+      <span id="schoolNameSide">SMP NEGERI 3 KALIPARE</span>
+    </div>
+    <div class="nav">
+      <button class="active" onclick="openPage('dashboard')">Dashboard</button>
+      <button onclick="openPage('scan')">Scan QR</button>
+      <button onclick="openPage('students')">Data Siswa</button>
+      <button onclick="openPage('rekap')">Rekap Absensi</button>
+      <button onclick="openPage('qr')">Kartu QR</button>
+      <button onclick="openPage('settings')">Pengaturan</button>
+      <button onclick="openPage('logs')">Log Aktivitas</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <div id="userLabel" class="user"></div>
+      </div>
+      <button class="btn dark" onclick="logout()">Keluar</button>
+    </div>
+
+    <section id="page-dashboard" class="page">
+      <div class="card">
+        <label>Tanggal Absensi</label>
+        <input type="date" id="dashboardDate" onchange="loadDashboard()">
+      </div>
+      <div class="grid stats">
+        <div class="stat"><b id="stTotal">0</b><span>Total Siswa</span></div>
+        <div class="stat"><b id="stHadir">0</b><span>Hadir</span></div>
+        <div class="stat"><b id="stLate">0</b><span>Terlambat</span></div>
+        <div class="stat"><b id="stIzin">0</b><span>Izin</span></div>
+        <div class="stat"><b id="stSakit">0</b><span>Sakit</span></div>
+        <div class="stat"><b id="stAlpa">0</b><span>Alpa</span></div>
+      </div>
+      <div class="card">
+        <h3>Siswa Belum Hadir</h3>
+        <div class="tablewrap">
+          <table class="table">
+            <thead><tr><th>Nama</th><th>Kelas</th><th>WhatsApp</th></tr></thead>
+            <tbody id="belumBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-scan" class="page hide">
+      <div class="card scanner-card">
+        <h2>Scan QR Siswa</h2>
+        <div id="cameraStatus" class="camera-status">
+          Kamera belum diaktifkan.
+        </div>
+        <div id="reader"></div>
+        <div class="scan-result">
+          Pastikan aplikasi dibuka melalui HTTPS dan izinkan akses kamera.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn primary" onclick="startCamera()">Mulai Kamera</button>
+          <button class="btn dark" onclick="stopCamera()">Matikan Kamera</button>
+        </div>
+      </div>
+      <div id="scanCard" class="card hidden"></div>
+    </section>
+
+    <section id="page-students" class="page hide">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            <h2>Data Siswa</h2>
+            <div class="user">Kelola data siswa dan nomor WhatsApp orang tua.</div>
+          </div>
+          <div>
+            <button class="btn primary" onclick="studentForm()">+ Siswa</button>
+            <button class="btn dark" onclick="downloadTemplate()">Template CSV</button>
+            <button class="btn light" onclick="$('csvFile').click()">Import CSV</button>
+            <input id="csvFile" type="file" accept=".csv" class="hidden" onchange="importCsv(this)">
+          </div>
+        </div>
+        <input id="studentSearch" placeholder="Cari nama, NISN, kelas..." oninput="renderStudents()">
+        <div class="tablewrap">
+          <table class="table">
+            <thead><tr><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>WA Ortu</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="studentBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-rekap" class="page hide">
+      <div class="card">
+        <div class="two grid">
+          <div><label>Tanggal</label><input type="date" id="reportDate"></div>
+          <div style="display:flex;align-items:end;gap:8px">
+            <button class="btn primary" onclick="loadReport()">Tampilkan</button>
+            <button class="btn dark" onclick="exportCsv()">Export CSV</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Rekap Harian</h3>
+        <div class="tablewrap">
+          <table class="table">
+            <thead><tr><th>Nama</th><th>Kelas</th><th>Jam</th><th>Status</th><th>Keterangan</th><th>Aksi</th></tr></thead>
+            <tbody id="reportBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Rekap Bulanan</h3>
+        <div class="two grid">
+          <input type="month" id="monthInput">
+          <button class="btn primary" onclick="loadMonthly()">Tampilkan</button>
+        </div>
+        <div class="tablewrap">
+          <table class="table">
+            <thead><tr><th>Nama</th><th>Kelas</th><th>Hadir</th><th>Terlambat</th><th>Izin</th><th>Sakit</th><th>Alpa</th></tr></thead>
+            <tbody id="monthlyBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-qr" class="page hide">
+      <div class="card no-print">
+        <button class="btn primary" onclick="generateQR()">Generate Semua QR</button>
+        <button class="btn dark" onclick="window.print()">Cetak Kartu</button>
+      </div>
+      <div id="qrGrid" class="qr-grid"></div>
+    </section>
+
+    <section id="page-settings" class="page hide">
+      <div class="card">
+        <h2>Pengaturan</h2>
+        <div class="two grid">
+          <div><label>Nama Sekolah</label><input id="sSchool"></div>
+          <div><label>NPSN</label><input id="sNpsn"></div>
+          <div><label>Jam Masuk</label><input type="time" id="sMasuk"></div>
+          <div><label>Batas Terlambat</label><input type="time" id="sLate"></div>
+        </div>
+        <label>Template Pesan WhatsApp</label>
+        <textarea id="sWa"></textarea>
+        <div class="user">{nama}, {tanggal}, {kelas} dapat digunakan sebagai variabel.</div>
+        <br>
+        <button class="btn primary" onclick="saveSettings()">Simpan Pengaturan</button>
+      </div>
+    </section>
+
+    <section id="page-logs" class="page hide">
+      <div class="card">
+        <h2>Log Aktivitas</h2>
+        <div class="tablewrap">
+          <table class="table">
+            <thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Detail</th></tr></thead>
+            <tbody id="logsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="mobile-nav">
+    <button onclick="openPage('dashboard')">Home</button>
+    <button onclick="openPage('scan')">Scan</button>
+    <button onclick="openPage('students')">Siswa</button>
+    <button onclick="openPage('rekap')">Rekap</button>
+    <button onclick="openPage('qr')">QR</button>
+  </nav>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modalbox">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 id="modalTitle">Data Siswa</h3>
+      <button class="btn gray" onclick="closeModal()">Tutup</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div id="loading" class="loading"><div class="spinner"></div></div>
+
+<script>
+const STORAGE_API='absensi_api_url';
+const STORAGE_TOKEN='absensi_token';
+const STORAGE_USER='absensi_user';
+
+let APP={
+  api:localStorage.getItem(STORAGE_API)||'',
+  token:sessionStorage.getItem(STORAGE_TOKEN)||'',
+  user:JSON.parse(sessionStorage.getItem(STORAGE_USER)||'null'),
+  settings:{},
+  students:[],
+  scanner:null,
+  currentStudent:null,
+  scanBusy:false
+};
+
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Jakarta'});
+const monthNow=()=>today().slice(0,7);
+
+function busy(v){$('loading').classList.toggle('show',v)}
+function esc(x){
+  return String(x??'').replace(/[&<>"']/g,m=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[m]));
+}
+function notify(x){alert(x)}
+function download(name,text,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type}));
+  a.download=name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+function saveApi(){
+  const url=$('apiInput').value.trim();
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)){
+    $('loginMsg').textContent='URL API tidak valid. Gunakan URL Web App Apps Script yang berakhiran /exec.';
+    return;
+  }
+  APP.api=url;
+  localStorage.setItem(STORAGE_API,url);
+  $('setupBox').classList.add('hidden');
+  $('loginMsg').style.color='#027a48';
+  $('loginMsg').textContent='URL API tersimpan.';
+}
+
+function apiCall(action,params={}){
+  return new Promise((resolve,reject)=>{
+    if(!APP.api){
+      reject(new Error('URL API belum diatur.'));
+      return;
+    }
+
+    const callback='jsonp_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    const query=new URLSearchParams({
+      action,
+      callback,
+      ...params
+    });
+
+    window[callback]=data=>{
+      delete window[callback];
+      script.remove();
+      resolve(data);
+    };
+
+    script.onerror=()=>{
+      delete window[callback];
+      script.remove();
+      reject(new Error('API tidak dapat dihubungi. Pastikan deployment Apps Script aktif.'));
+    };
+
+    script.src=APP.api+'?'+query.toString();
+    document.body.appendChild(script);
+
+    setTimeout(()=>{
+      if(window[callback]){
+        delete window[callback];
+        script.remove();
+        reject(new Error('Koneksi API timeout.'));
+      }
+    },20000);
+  });
+}
+
+function authCall(action,params={}){
+  return apiCall(action,{
+    ...params,
+    token:APP.token
+  });
+}
+
+async function login(){
+  $('loginMsg').textContent='';
+  if(!APP.api){
+    $('setupBox').classList.remove('hidden');
+    $('loginMsg').textContent='Masukkan URL API Apps Script terlebih dahulu.';
+    return;
+  }
+
+  busy(true);
+
+  try{
+    const result=await apiCall('login',{
+      username:$('loginUser').value.trim(),
+      password:$('loginPass').value
+    });
+
+    if(!result.success){
+      $('loginMsg').textContent=result.message;
+      return;
+    }
+
+    APP.token=result.token;
+    APP.user=result.user;
+
+    sessionStorage.setItem(STORAGE_TOKEN,APP.token);
+    sessionStorage.setItem(STORAGE_USER,JSON.stringify(APP.user));
+
+    $('loginView').classList.add('hidden');
+    $('appView').classList.remove('hidden');
+    $('userLabel').textContent=
+      APP.user.nama+' • '+APP.user.role;
+
+    await boot();
+  }catch(e){
+    $('loginMsg').textContent=e.message;
+  }finally{
+    busy(false);
+  }
+}
+
+function logout(){
+  stopCamera();
+  sessionStorage.removeItem(STORAGE_TOKEN);
+  sessionStorage.removeItem(STORAGE_USER);
+  location.reload();
+}
+
+async function boot(){
+  const result=await authCall('bootstrap');
+
+  if(!result.success){
+    throw new Error(result.message);
+  }
+
+  APP.settings=result.settings||{};
+  APP.students=result.students||[];
+
+  $('schoolNameSide').textContent=
+    APP.settings.NAMA_SEKOLAH||
+    'SMP NEGERI 3 KALIPARE';
+
+  $('dashboardDate').value=today();
+  $('reportDate').value=today();
+  $('monthInput').value=monthNow();
+
+  fillSettings();
+  renderStudents();
+  loadDashboard();
+}
+
+function openPage(name){
+  document
+    .querySelectorAll('.page')
+    .forEach(el=>el.classList.add('hide'));
+
+  $('page-'+name)
+    .classList.remove('hide');
+
+  document
+    .querySelectorAll('.nav button')
+    .forEach(el=>el.classList.remove('active'));
+
+  const nav=[
+    ...document.querySelectorAll('.nav button')
+  ].find(btn=>
+    btn.getAttribute('onclick')===
+    `openPage('${name}')`
+  );
+
+  if(nav)nav.classList.add('active');
+
+  const titles={
+    dashboard:'Dashboard',
+    scan:'Scan QR',
+    students:'Data Siswa',
+    rekap:'Rekap Absensi',
+    qr:'Kartu QR',
+    settings:'Pengaturan',
+    logs:'Log Aktivitas'
+  };
+
+  $('pageTitle').textContent=titles[name];
+
+  if(name==='scan'){
+    startCamera();
+  }else{
+    stopCamera();
+  }
+
+  if(name==='dashboard')loadDashboard();
+  if(name==='rekap')loadReport();
+  if(name==='logs')loadLogs();
+}
+
+/* =========================
+   CAMERA
+========================= */
+function setCameraStatus(text,type=''){
+  $('cameraStatus').className=
+    'camera-status '+type;
+  $('cameraStatus').textContent=text;
+}
+
+async function startCamera(){
+  if(APP.scanner)return;
+
+  if(!window.isSecureContext){
+    setCameraStatus(
+      'Kamera membutuhkan HTTPS. Buka aplikasi melalui URL HTTPS.',
+      'error'
+    );
+    return;
+  }
+
+  if(!navigator.mediaDevices||
+     !navigator.mediaDevices.getUserMedia){
+    setCameraStatus(
+      'Browser ini tidak mendukung akses kamera. Gunakan Chrome, Edge, Safari, atau Firefox versi terbaru.',
+      'error'
+    );
+    return;
+  }
+
+  try{
+    setCameraStatus('Meminta izin kamera...');
+
+    APP.scanner=
+      new Html5Qrcode('reader');
+
+    const config={
+      fps:10,
+      aspectRatio:1,
+      qrbox:(width,height)=>{
+        const size=
+          Math.floor(
+            Math.min(width,height)*0.70
+          );
+        return{
+          width:size,
+          height:size
+        };
+      }
+    };
+
+    try{
+      await APP.scanner.start(
+        {
+          facingMode:{
+            exact:'environment'
+          },
+        },
+        config,
+        onQrDetected,
+        ()=>{}
+      );
+    }catch(firstError){
+      await APP.scanner.start(
+        {
+          facingMode:'environment'
+        },
+        config,
+        onQrDetected,
+        ()=>{}
+      );
+    }
+
+    setCameraStatus(
+      'Kamera aktif. Arahkan QR siswa ke kotak scanner.',
+      'ok'
+    );
+  }catch(error){
+    APP.scanner=null;
+
+    setCameraStatus(
+      'Kamera gagal dibuka: '+
+      (error.message||error)+
+      '. Pastikan izin kamera diberikan.',
+      'error'
+    );
+  }
+}
+
+async function stopCamera(){
+  if(!APP.scanner)return;
+
+  try{
+    await APP.scanner.stop();
+    APP.scanner.clear();
+  }catch(e){}
+
+  APP.scanner=null;
+}
+
+async function onQrDetected(decodedText){
+  if(APP.scanBusy)return;
+
+  APP.scanBusy=true;
+
+  await stopCamera();
+
+  busy(true);
+
+  try{
+    const result=
+      await authCall(
+        'student',
+        {id:decodedText}
+      );
+
+    if(!result.success){
+      notify(result.message);
+      startCamera();
+      return;
+    }
+
+    APP.currentStudent=
+      result.student;
+
+    showScannedStudent(
+      result.student
+    );
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+    setTimeout(
+      ()=>APP.scanBusy=false,
+      1000
+    );
+  }
+}
+
+function showScannedStudent(s){
+  $('scanCard').classList.remove('hidden');
+
+  $('scanCard').innerHTML=`
+    <h2>${esc(s.nama)}</h2>
+    <div class="user">
+      NISN ${esc(s.nisn)}
+      • Kelas ${esc(s.kelas)}
+      ${esc(s.rombel)}
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px">
+      <button class="btn success"
+        onclick="saveAttendance('HADIR')">
+        HADIR
+      </button>
+
+      <button class="btn warning"
+        onclick="saveAttendance('IZIN')">
+        IZIN
+      </button>
+
+      <button class="btn light"
+        onclick="saveAttendance('SAKIT')">
+        SAKIT
+      </button>
+
+      <button class="btn danger"
+        onclick="saveAttendance('ALPA')">
+        ALPA
+      </button>
+
+      <button class="btn dark"
+        onclick="openWhatsApp('${esc(s.id)}')">
+        WhatsApp Orang Tua
+      </button>
+    </div>
+  `;
+}
+
+async function saveAttendance(status){
+  if(!APP.currentStudent)return;
+
+  const keterangan=
+    prompt(
+      'Keterangan (opsional):',
+      ''
+    )||'';
+
+  busy(true);
+
+  try{
+    const result=
+      await authCall(
+        'attendance',
+        {
+          id:APP.currentStudent.id,
+          status:status,
+          keterangan:keterangan
+        }
+      );
+
+    if(!result.success){
+      notify(result.message);
+      return;
+    }
+
+    notify(
+      result.student.nama+
+      '\\nStatus: '+
+      result.status+
+      '\\nJam: '+
+      result.jam
+    );
+
+    APP.currentStudent=null;
+    $('scanCard').classList.add('hidden');
+
+    await loadDashboard();
+    startCamera();
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+async function loadDashboard(){
+  try{
+    const d=
+      await authCall(
+        'dashboard',
+        {
+          date:$('dashboardDate').value
+        }
+      );
+
+    $('stTotal').textContent=d.totalSiswa;
+    $('stHadir').textContent=d.hadir;
+    $('stLate').textContent=d.terlambat;
+    $('stIzin').textContent=d.izin;
+    $('stSakit').textContent=d.sakit;
+    $('stAlpa').textContent=d.alpa;
+
+    $('belumBody').innerHTML=
+      d.belumHadirList.map(s=>`
+        <tr>
+          <td><b>${esc(s.nama)}</b></td>
+          <td>${esc(s.kelas)} ${esc(s.rombel)}</td>
+          <td>
+            <button class="btn dark"
+              onclick="openWhatsApp('${esc(s.id)}')">
+              Tanya Ortu
+            </button>
+          </td>
+        </tr>
+      `).join('')||
+      `<tr>
+        <td colspan="3">
+          Semua siswa sudah tercatat.
+        </td>
+      </tr>`;
+  }catch(e){
+    if(e.message.includes('Sesi')){
+      logout();
+    }
+  }
+}
+
+/* =========================
+   WHATSAPP
+========================= */
+function openWhatsApp(id){
+  const student=
+    APP.students.find(
+      s=>s.id===id
+    )||
+    APP.currentStudent;
+
+  if(!student){
+    notify('Data siswa tidak ditemukan.');
+    return;
+  }
+
+  const phone=
+    String(student.waOrtu||'')
+      .replace(/\D/g,'');
+
+  if(!phone){
+    notify(
+      'Nomor WhatsApp orang tua belum diisi.'
+    );
+    return;
+  }
+
+  let message=
+    APP.settings.PESAN_WA||
+    'Assalamu’alaikum Bapak/Ibu Orang Tua/Wali dari {nama}. Kami dari SMP Negeri 3 Kalipare ingin menanyakan kehadiran {nama} pada hari ini {tanggal}.';
+
+  message=
+    message
+      .replaceAll(
+        '{nama}',
+        student.nama
+      )
+      .replaceAll(
+        '{tanggal}',
+        new Date()
+          .toLocaleDateString(
+            'id-ID'
+          )
+      )
+      .replaceAll(
+        '{kelas}',
+        `${student.kelas} ${student.rombel}`
+      );
+
+  window.open(
+    'https://wa.me/'+
+    phone+
+    '?text='+
+    encodeURIComponent(message),
+    '_blank'
+  );
+}
+
+/* =========================
+   STUDENTS
+========================= */
+function studentForm(student=null){
+  $('modalTitle').textContent=
+    student?
+    'Ubah Data Siswa':
+    'Tambah Siswa';
+
+  $('modalBody').innerHTML=`
+    <div class="two grid">
+      <div>
+        <label>ID Siswa</label>
+        <input id="fId"
+          value="${esc(student?.id||'')}"
+          placeholder="Kosongkan untuk otomatis">
+      </div>
+
+      <div>
+        <label>NISN</label>
+        <input id="fNisn"
+          value="${esc(student?.nisn||'')}">
+      </div>
+
+      <div>
+        <label>Nama Lengkap</label>
+        <input id="fNama"
+          value="${esc(student?.nama||'')}">
+      </div>
+
+      <div>
+        <label>Jenis Kelamin</label>
+        <select id="fJk">
+          <option value="L"
+            ${student?.jk==='L'?'selected':''}>
+            Laki-laki
+          </option>
+          <option value="P"
+            ${student?.jk==='P'?'selected':''}>
+            Perempuan
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label>Kelas</label>
+        <select id="fKelas">
+          <option value="7"
+            ${student?.kelas==='7'?'selected':''}>
+            7
+          </option>
+          <option value="8"
+            ${student?.kelas==='8'?'selected':''}>
+            8
+          </option>
+          <option value="9"
+            ${student?.kelas==='9'?'selected':''}>
+            9
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label>Rombel</label>
+        <input id="fRombel"
+          value="${esc(student?.rombel||'')}">
+      </div>
+
+      <div>
+        <label>WhatsApp Orang Tua</label>
+        <input id="fWa"
+          value="${esc(student?.waOrtu||'')}"
+          placeholder="628123456789">
+      </div>
+
+      <div>
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="AKTIF"
+            ${student?.status!=='NONAKTIF'?'selected':''}>
+            AKTIF
+          </option>
+          <option value="NONAKTIF"
+            ${student?.status==='NONAKTIF'?'selected':''}>
+            NONAKTIF
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <label>Alamat</label>
+    <textarea id="fAlamat">${esc(student?.alamat||'')}</textarea>
+
+    <button class="btn primary"
+      onclick="saveStudent()">
+      Simpan Data
+    </button>
+  `;
+
+  $('modal').classList.add('show');
+}
+
+function closeModal(){
+  $('modal').classList.remove('show');
+}
+
+async function saveStudent(){
+  const p={
+    id:$('fId').value,
+    nisn:$('fNisn').value,
+    nama:$('fNama').value,
+    jk:$('fJk').value,
+    kelas:$('fKelas').value,
+    rombel:$('fRombel').value,
+    waOrtu:$('fWa').value,
+    alamat:$('fAlamat').value,
+    status:$('fStatus').value
+  };
+
+  if(!p.nisn||!p.nama){
+    notify(
+      'NISN dan nama wajib diisi.'
+    );
+    return;
+  }
+
+  busy(true);
+
+  try{
+    const result=
+      await authCall(
+        'saveStudent',
+        p
+      );
+
+    if(!result.success){
+      notify(result.message);
+      return;
+    }
+
+    await refreshStudents();
+    closeModal();
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+async function refreshStudents(){
+  const result=
+    await authCall('students');
+
+  APP.students=
+    result.students||[];
+
+  renderStudents();
+}
+
+function renderStudents(){
+  const q=
+    ($('studentSearch').value||'')
+      .toLowerCase();
+
+  const list=
+    APP.students.filter(s=>
+      `${s.id} ${s.nisn} ${s.nama} ${s.kelas} ${s.rombel}`
+        .toLowerCase()
+        .includes(q)
+    );
+
+  $('studentBody').innerHTML=
+    list.map(s=>`
+      <tr>
+        <td>${esc(s.id)}</td>
+        <td>${esc(s.nisn)}</td>
+        <td><b>${esc(s.nama)}</b></td>
+        <td>${esc(s.kelas)} ${esc(s.rombel)}</td>
+        <td>${esc(s.waOrtu)}</td>
+        <td>${esc(s.status)}</td>
+        <td>
+          <button class="btn light"
+            onclick='studentForm(${JSON.stringify(s)})'>
+            Edit
+          </button>
+
+          <button class="btn danger"
+            onclick="removeStudent('${esc(s.id)}')">
+            Hapus
+          </button>
+
+          <button class="btn dark"
+            onclick="openWhatsApp('${esc(s.id)}')">
+            WA
+          </button>
+        </td>
+      </tr>
+    `).join('');
+}
+
+async function removeStudent(id){
+  if(!confirm('Hapus data siswa ini?'))return;
+
+  busy(true);
+
+  try{
+    await authCall(
+      'deleteStudent',
+      {id}
+    );
+
+    await refreshStudents();
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+function downloadTemplate(){
+  const csv=
+`ID_SISWA,NISN,NAMA,JK,KELAS,ROMBEL,NO_WA_ORTU,ALAMAT,STATUS
+S001,1234567890,Contoh Siswa,L,7,A,628123456789,Kalipare,AKTIF`;
+
+  download(
+    'template-siswa.csv',
+    csv,
+    'text/csv;charset=utf-8'
+  );
+}
+
+async function importCsv(input){
+  const file=input.files[0];
+
+  if(!file)return;
+
+  const text=
+    await file.text();
+
+  const lines=
+    text
+      .split(/\r?\n/)
+      .filter(x=>x.trim());
+
+  let start=
+    /NISN|NAMA/i.test(lines[0])
+      ?1:0;
+
+  busy(true);
+
+  try{
+    let count=0;
+
+    for(
+      let i=start;
+      i<lines.length;
+      i++
+    ){
+      const row=
+        lines[i]
+          .split(',')
+          .map(x=>
+            x
+              .replace(/^"|"$/g,'')
+              .trim()
+          );
+
+      if(!row[1])continue;
+
+      await authCall(
+        'saveStudent',
+        {
+          id:row[0]||'',
+          nisn:row[1]||'',
+          nama:row[2]||'',
+          jk:row[3]||'',
+          kelas:row[4]||'',
+          rombel:row[5]||'',
+          waOrtu:row[6]||'',
+          alamat:row[7]||'',
+          status:row[8]||'AKTIF'
+        }
+      );
+
+      count++;
+    }
+
+    await refreshStudents();
+
+    notify(
+      'Berhasil mengimpor '+
+      count+
+      ' siswa.'
+    );
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+    input.value='';
+  }
+}
+
+/* =========================
+   REPORT
+========================= */
+async function loadReport(){
+  busy(true);
+
+  try{
+    const result=
+      await authCall(
+        'report',
+        {
+          date:$('reportDate').value
+        }
+      );
+
+    $('reportBody').innerHTML=
+      result.report.map(x=>`
+        <tr>
+          <td>${esc(x.nama)}</td>
+          <td>${esc(x.kelas)} ${esc(x.rombel)}</td>
+          <td>${esc(x.jam)}</td>
+          <td>
+            <span class="badge ${x.status.toLowerCase()}">
+              ${esc(x.status)}
+            </span>
+          </td>
+          <td>${esc(x.keterangan)}</td>
+          <td>
+            <button class="btn danger"
+              onclick="deleteAttendance('${esc(x.idAbsensi)}')">
+              Hapus
+            </button>
+          </td>
+        </tr>
+      `).join('')||
+      `<tr>
+        <td colspan="6">
+          Tidak ada data.
+        </td>
+      </tr>`;
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+async function deleteAttendance(id){
+  if(!confirm('Hapus catatan absensi ini?'))return;
+
+  busy(true);
+
+  try{
+    await authCall(
+      'deleteAttendance',
+      {id}
+    );
+
+    await loadReport();
+    await loadDashboard();
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+async function exportCsv(){
+  busy(true);
+
+  try{
+    const result=
+      await authCall(
+        'export',
+        {
+          date:$('reportDate').value
+        }
+      );
+
+    download(
+      result.filename,
+      result.content,
+      'text/csv;charset=utf-8'
+    );
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+async function loadMonthly(){
+  busy(true);
+
+  try{
+    const result=
+      await authCall(
+        'monthly',
+        {
+          month:$('monthInput').value
+        }
+      );
+
+    $('monthlyBody').innerHTML=
+      result.data.map(x=>`
+        <tr>
+          <td>${esc(x.nama)}</td>
+          <td>${esc(x.kelas)} ${esc(x.rombel)}</td>
+          <td>${x.HADIR}</td>
+          <td>${x.TERLAMBAT}</td>
+          <td>${x.IZIN}</td>
+          <td>${x.SAKIT}</td>
+          <td>${x.ALPA}</td>
+        </tr>
+      `).join('');
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+/* =========================
+   QR CARD
+========================= */
+function generateQR(){
+  $('qrGrid').innerHTML='';
+
+  APP.students
+    .filter(s=>s.status==='AKTIF')
+    .forEach(s=>{
+      const card=
+        document.createElement('div');
+
+      card.className='qr-card';
+
+      card.innerHTML=`
+        <strong>
+          SMP NEGERI 3 KALIPARE
+        </strong>
+
+        <div class="qr"></div>
+
+        <strong>
+          ${esc(s.nama)}
+        </strong>
+
+        <div class="small">
+          NISN ${esc(s.nisn)}<br>
+          Kelas ${esc(s.kelas)}
+          ${esc(s.rombel)}<br>
+          ID ${esc(s.id)}
+        </div>
+      `;
+
+      $('qrGrid')
+        .appendChild(card);
+
+      new QRCode(
+        card.querySelector('.qr'),
+        {
+          text:s.id,
+          width:150,
+          height:150
+        }
+      );
+    });
+}
+
+/* =========================
+   SETTINGS
+========================= */
+function fillSettings(){
+  $('sSchool').value=
+    APP.settings.NAMA_SEKOLAH||'';
+
+  $('sNpsn').value=
+    APP.settings.NPSN||'';
+
+  $('sMasuk').value=
+    APP.settings.JAM_MASUK||'07:00';
+
+  $('sLate').value=
+    APP.settings.BATAS_TERLAMBAT||'07:15';
+
+  $('sWa').value=
+    APP.settings.PESAN_WA||'';
+}
+
+async function saveSettings(){
+  busy(true);
+
+  try{
+    const result=
+      await authCall(
+        'saveSettings',
+        {
+          NAMA_SEKOLAH:$('sSchool').value,
+          NPSN:$('sNpsn').value,
+          JAM_MASUK:$('sMasuk').value,
+          BATAS_TERLAMBAT:$('sLate').value,
+          PESAN_WA:$('sWa').value
+        }
+      );
+
+    APP.settings=result.settings;
+    fillSettings();
+
+    $('schoolNameSide').textContent=
+      APP.settings.NAMA_SEKOLAH;
+
+    notify(
+      'Pengaturan berhasil disimpan.'
+    );
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+/* =========================
+   LOGS
+========================= */
+async function loadLogs(){
+  busy(true);
+
+  try{
+    const result=
+      await authCall('logs');
+
+    $('logsBody').innerHTML=
+      result.logs.map(x=>`
+        <tr>
+          <td>${esc(x.waktu)}</td>
+          <td>${esc(x.username)}</td>
+          <td>${esc(x.aksi)}</td>
+          <td>${esc(x.detail)}</td>
+        </tr>
+      `).join('');
+  }catch(e){
+    notify(e.message);
+  }finally{
+    busy(false);
+  }
+}
+
+/* =========================
+   INIT
+========================= */
+window.addEventListener(
+  'load',
+  async()=>{
+    $('apiInput').value=
+      APP.api;
+
+    if(!APP.api){
+      $('setupBox')
+        .classList
+        .remove('hidden');
+    }
+
+    if(
+      APP.api &&
+      APP.token &&
+      APP.user
+    ){
+      $('loginView')
+        .classList
+        .add('hidden');
+
+      $('appView')
+        .classList
+        .remove('hidden');
+
+      $('userLabel').textContent=
+        APP.user.nama+
+        ' • '+
+        APP.user.role;
+
+      try{
+        await boot();
+      }catch(e){
+        sessionStorage.clear();
+        location.reload();
+      }
+    }
+  }
+);
+</script>
+</body>
+</html>
