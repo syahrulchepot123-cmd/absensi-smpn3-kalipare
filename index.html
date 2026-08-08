@@ -64,6 +64,89 @@ textarea{min-height:100px;resize:vertical}
 .login-box h1{margin:0 0 5px}.login-box p{color:var(--muted)}
 .setup{background:#fff8e6;border:1px solid #fedf89;color:#7a2e0b;border-radius:12px;padding:12px;font-size:12px;margin-bottom:15px}
 .mobile-nav{display:none}
+
+/* PENDING ACC */
+.approval-card{
+  text-align:center;
+  padding:28px 18px;
+}
+.approval-icon{
+  width:72px;height:72px;margin:0 auto 14px;
+  display:grid;place-items:center;border-radius:50%;
+  background:#fff7ed;color:#c2410c;font-size:34px;font-weight:900;
+}
+.approval-name{font-size:25px;font-weight:900;margin:6px 0}
+.approval-meta{color:#667085;font-size:13px;margin-bottom:18px}
+.approval-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.approval-actions .btn{min-width:150px}
+
+/* STUDENT DISPLAY */
+.display-page{
+  min-height:calc(100vh - 80px);
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.display-head{
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+}
+.display-school{
+  font-size:14px;color:#667085;font-weight:800;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.display-clock{font-size:26px;font-weight:900}
+.student-display{
+  flex:1;
+  min-height:440px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(145deg,#eef5ff,#ffffff 55%,#ecfdf3);
+  border:1px solid #dbe5f0;
+  border-radius:26px;
+  padding:30px;
+  text-align:center;
+  box-shadow:0 15px 45px rgba(16,24,40,.08);
+}
+.display-check{
+  width:90px;height:90px;border-radius:50%;
+  margin:0 auto 16px;display:grid;place-items:center;
+  background:#039855;color:#fff;font-size:50px;font-weight:900;
+}
+.display-success{
+  color:#039855;font-size:17px;font-weight:900;
+  letter-spacing:.08em;
+}
+.display-name{
+  font-size:clamp(30px,5vw,58px);
+  line-height:1.05;font-weight:950;margin:9px 0;
+}
+.display-status{
+  font-size:clamp(18px,2.4vw,29px);font-weight:900;
+}
+.display-sub{
+  margin-top:13px;color:#667085;font-size:14px;
+}
+.display-queue{
+  background:#fff;border:1px solid #e4e7ec;border-radius:20px;
+  padding:16px;
+}
+.display-queue h3{margin-bottom:10px}
+.queue-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 2px;border-bottom:1px solid #f2f4f7;
+}
+.queue-row:last-child{border-bottom:0}
+.queue-name{font-weight:800}
+.queue-meta{font-size:12px;color:#667085}
+.fullscreen-display{
+  background:#050b16;color:#fff;
+}
+.fullscreen-display .main{background:#050b16}
+.fullscreen-display .topbar{display:none}
+.fullscreen-display .display-school,
+.fullscreen-display .queue-meta{color:#98a2b3}
+.fullscreen-display .display-queue{background:#101828;border-color:#1d2939}
+.fullscreen-display .student-display{min-height:68vh;background:linear-gradient(145deg,#071a34,#0d1726 55%,#062b20);border-color:#1d2939}
 @media(max-width:1050px){
  .sidebar{display:none}.main{margin:0;padding:15px 15px 80px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.qr-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.mobile-nav{display:flex;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:30}
  .mobile-nav button{flex:1;border:0;background:#fff;padding:10px 4px;font-size:11px;font-weight:800}
@@ -109,6 +192,7 @@ textarea{min-height:100px;resize:vertical}
       <button onclick="openPage('scan')">Scan QR</button>
       <button onclick="openPage('students')">Data Siswa</button>
       <button onclick="openPage('rekap')">Rekap Absensi</button>
+      <button onclick="openPage('display')">Layar Siswa</button>
       <button onclick="openPage('qr')">Kartu QR</button>
       <button onclick="openPage('settings')">Pengaturan</button>
       <button onclick="openPage('logs')">Log Aktivitas</button>
@@ -232,6 +316,43 @@ textarea{min-height:100px;resize:vertical}
       <div id="qrGrid" class="qr-grid"></div>
     </section>
 
+    <section id="page-display" class="page hide">
+      <div class="display-page">
+        <div class="display-head">
+          <div>
+            <div class="display-school" id="displaySchool">SMP NEGERI 3 KALIPARE</div>
+            <h2 style="margin:4px 0 0">Layar Kehadiran Siswa</h2>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div id="displayClock" class="display-clock">--:--:--</div>
+            <button class="btn dark no-print" onclick="toggleDisplayFullscreen()">
+              Fullscreen
+            </button>
+          </div>
+        </div>
+
+        <div id="studentDisplay" class="student-display">
+          <div>
+            <div style="font-size:46px;margin-bottom:10px">✓</div>
+            <div class="display-success">SISTEM ABSENSI AKTIF</div>
+            <div class="display-name">Menunggu siswa...</div>
+            <div class="display-sub">
+              Siswa yang telah di-ACC Guru Piket akan tampil di sini.
+            </div>
+          </div>
+        </div>
+
+        <div class="display-queue">
+          <h3>Absensi Terbaru</h3>
+          <div id="displayQueue">
+            <div class="queue-row">
+              <div class="queue-meta">Belum ada absensi hari ini.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="page-settings" class="page hide">
       <div class="card">
         <h2>Pengaturan</h2>
@@ -267,6 +388,7 @@ textarea{min-height:100px;resize:vertical}
     <button onclick="openPage('scan')">Scan</button>
     <button onclick="openPage('students')">Siswa</button>
     <button onclick="openPage('rekap')">Rekap</button>
+    <button onclick="openPage('display')">Layar</button>
     <button onclick="openPage('qr')">QR</button>
   </nav>
 </div>
@@ -296,7 +418,11 @@ let APP={
   students:[],
   scanner:null,
   currentStudent:null,
-  scanBusy:false
+  scanBusy:false,
+  pendingStudent:null,
+  displayTimer:null,
+  lastDisplayId:'',
+  displayFullscreen:false
 };
 
 const $=id=>document.getElementById(id);
@@ -445,6 +571,9 @@ async function boot(){
 
   fillSettings();
   renderStudents();
+  $('displaySchool').textContent=
+    APP.settings.NAMA_SEKOLAH||
+    'SMP NEGERI 3 KALIPARE';
   loadDashboard();
 }
 
@@ -474,6 +603,7 @@ function openPage(name){
     scan:'Scan QR',
     students:'Data Siswa',
     rekap:'Rekap Absensi',
+    display:'Layar Siswa',
     qr:'Kartu QR',
     settings:'Pengaturan',
     logs:'Log Aktivitas'
@@ -490,6 +620,16 @@ function openPage(name){
   if(name==='dashboard')loadDashboard();
   if(name==='rekap')loadReport();
   if(name==='logs')loadLogs();
+
+  if(name==='display'){
+    $('displaySchool').textContent=
+      APP.settings.NAMA_SEKOLAH||
+      'SMP NEGERI 3 KALIPARE';
+    startDisplayPolling();
+    loadLiveDisplay();
+  }else{
+    stopDisplayPolling();
+  }
 }
 
 /* =========================
@@ -595,106 +735,15 @@ async function onQrDetected(decodedText){
   if(APP.scanBusy)return;
 
   APP.scanBusy=true;
-
   await stopCamera();
 
-  try{
-    // Satu request saja: QR -> backend -> simpan HADIR.
-    // Backend mencari data siswa dari cache dan langsung menulis absensi.
-    await saveAttendance(decodedText);
-  }catch(e){
-    notify(e.message);
-  }finally{
-    // saveAttendance() mengatur kapan scanner siap menerima QR berikutnya.
-  }
-}
+  const id=String(decodedText||'').trim();
+  const student=APP.students.find(s=>s.id===id);
 
-function showScannedStudent(s){
-  $('scanCard').classList.remove('hidden');
-
-  $('scanCard').innerHTML=`
-    <div style="text-align:center;padding:8px 4px">
-      <div style="font-size:42px;line-height:1;margin-bottom:10px">✓</div>
-      <h2 style="margin-bottom:6px">Memproses Absensi...</h2>
-      <div class="user">
-        ${esc(s.nama)} • Kelas ${esc(s.kelas)} ${esc(s.rombel)}
-      </div>
-    </div>
-  `;
-}
-
-/*
- * QR berhasil terbaca -> otomatis mencatat HADIR.
- * Tidak ada tombol konfirmasi dan tidak ada prompt keterangan.
- */
-async function saveAttendance(qrId){
-  if(!qrId || APP.scanBusy) return;
-
-  APP.scanBusy = true;
-
-  // Feedback langsung, tanpa menunggu server.
-  $('scanCard').classList.remove('hidden');
-  $('scanCard').innerHTML = `
-    <div style="text-align:center;padding:22px 12px">
-      <div style="
-        width:52px;height:52px;margin:0 auto 10px;
-        display:grid;place-items:center;border-radius:50%;
-        background:#eff8ff;color:#175cd3;
-        font-size:24px;font-weight:900;
-      ">⌛</div>
-      <h2 style="margin:5px 0">Menyimpan absensi...</h2>
-      <div style="color:#667085;font-size:13px">
-        QR berhasil terbaca.
-      </div>
-    </div>
-  `;
-
-  try{
-    const result = await authCall(
-      'attendance',
-      {
-        id: qrId,
-        status: 'HADIR',
-        keterangan: 'Absensi QR'
-      }
-    );
-
-    if(!result.success){
-      showScanMessage(
-        result.duplicate ? 'SUDAH ABSEN' : 'GAGAL',
-        result.message || 'Absensi gagal dicatat.',
-        false
-      );
-
-      setTimeout(async()=>{
-        $('scanCard').classList.add('hidden');
-        APP.scanBusy=false;
-        await startCamera();
-      },1200);
-
-      return;
-    }
-
-    showScanMessage(
-      'ABSEN BERHASIL',
-      result.student.nama,
-      true,
-      result.status,
-      result.jam
-    );
-
-    loadDashboard();
-
-    setTimeout(async()=>{
-      $('scanCard').classList.add('hidden');
-      APP.scanBusy=false;
-      await startCamera();
-    },1200);
-
-  }catch(e){
-    showScanMessage(
-      'GAGAL',
-      e.message || 'Koneksi ke server gagal.',
+  if(!student){
+    showApprovalMessage(
+      'QR TIDAK TERDAFTAR',
+      'Kode QR tidak ditemukan pada database siswa.',
       false
     );
 
@@ -702,97 +751,203 @@ async function saveAttendance(qrId){
       $('scanCard').classList.add('hidden');
       APP.scanBusy=false;
       await startCamera();
-    },1500);
+    },1300);
+
+    return;
   }
+
+  if(String(student.status).toUpperCase()==='NONAKTIF'){
+    showApprovalMessage(
+      'SISWA NONAKTIF',
+      student.nama+' berstatus NONAKTIF.',
+      false
+    );
+
+    setTimeout(async()=>{
+      $('scanCard').classList.add('hidden');
+      APP.scanBusy=false;
+      await startCamera();
+    },1300);
+
+    return;
+  }
+
+  APP.pendingStudent=student;
+
+  // TIDAK ADA REQUEST API di tahap scan.
+  // Data siswa sudah berada di memori browser sehingga respons terasa instan.
+  showApprovalCard(student);
 }
 
-function showScanMessage(title, name, success, status='', jam=''){
+function showApprovalCard(s){
   $('scanCard').classList.remove('hidden');
 
-  const icon = success ? '✓' : '!';
-  const color = success ? '#039855' : '#d92d20';
-  const bg = success ? '#ecfdf3' : '#fef3f2';
+  $('scanCard').innerHTML=`
+    <div class="approval-card">
+      <div class="approval-icon">✓</div>
+      <div style="color:#c2410c;font-size:13px;font-weight:900;letter-spacing:.06em">
+        QR BERHASIL DIBACA
+      </div>
 
-  $('scanCard').innerHTML = `
-    <div style="
-      text-align:center;
-      padding:22px 12px;
-      border-radius:16px;
-      background:${bg};
-      border:1px solid ${success ? '#abefc6' : '#fecdca'};
-    ">
-      <div style="
-        width:58px;
-        height:58px;
-        margin:0 auto 12px;
-        display:grid;
-        place-items:center;
-        border-radius:50%;
-        background:${color};
-        color:#fff;
-        font-size:32px;
-        font-weight:900;
-      ">${icon}</div>
+      <div class="approval-name">${esc(s.nama)}</div>
+
+      <div class="approval-meta">
+        NISN ${esc(s.nisn)}
+        • Kelas ${esc(s.kelas)} ${esc(s.rombel)}
+      </div>
 
       <div style="
-        color:${color};
-        font-size:13px;
-        font-weight:900;
-        letter-spacing:.05em;
-      ">${esc(title)}</div>
+        background:#f8fafc;border:1px solid #e4e7ec;
+        border-radius:12px;padding:12px;margin-bottom:18px;
+        font-size:13px;color:#475467
+      ">
+        Pastikan siswa yang tampil sesuai dengan siswa di depan Anda.
+        <b>Guru Piket melakukan ACC untuk mencatat HADIR.</b>
+      </div>
 
-      <h2 style="margin:6px 0 4px">
-        ${esc(name)}
-      </h2>
+      <div class="approval-actions">
+        <button class="btn success" onclick="approveAttendance()">
+          ✓ ACC — HADIR
+        </button>
 
-      ${
-        success
-        ? `
-          <div style="
-            font-size:15px;
-            font-weight:800;
-            margin-top:8px;
-          ">
-            ${esc(status)}
-            • Pukul ${esc(jam)}
-          </div>
-
-          <div style="
-            margin-top:12px;
-            color:#475467;
-            font-size:13px;
-          ">
-            ✓ Data berhasil disimpan
-          </div>
-
-          <div style="
-            margin-top:5px;
-            color:#667085;
-            font-size:12px;
-          ">
-            Siap melakukan scan berikutnya...
-          </div>
-        `
-        : `
-          <div style="
-            margin-top:12px;
-            color:#b42318;
-            font-size:13px;
-          ">
-            ${esc(name)}
-          </div>
-          <div style="
-            margin-top:6px;
-            color:#667085;
-            font-size:12px;
-          ">
-            Siap melakukan scan berikutnya...
-          </div>
-        `
-      }
+        <button class="btn danger" onclick="rejectAttendance()">
+          Scan Ulang
+        </button>
+      </div>
     </div>
   `;
 }
+
+function showApprovalMessage(title,message,success){
+  $('scanCard').classList.remove('hidden');
+
+  $('scanCard').innerHTML=`
+    <div class="approval-card">
+      <div class="approval-icon"
+        style="background:${success?'#ecfdf3':'#fef3f2'};
+               color:${success?'#039855':'#d92d20'}">
+        ${success?'✓':'!'}
+      </div>
+      <div style="font-size:15px;font-weight:900;color:${success?'#039855':'#d92d20'}">
+        ${esc(title)}
+      </div>
+      <div style="margin-top:8px;color:#475467;font-size:14px">
+        ${esc(message)}
+      </div>
+    </div>
+  `;
+}
+
+async function approveAttendance(){
+  const student=APP.pendingStudent;
+
+  if(!student || !APP.scanBusy)return;
+
+  // Tampilkan status proses secara langsung.
+  $('scanCard').innerHTML=`
+    <div class="approval-card">
+      <div class="approval-icon"
+        style="background:#eff8ff;color:#175cd3">
+        ⏳
+      </div>
+      <div style="font-size:14px;font-weight:900;color:#175cd3">
+        ACC DITERIMA
+      </div>
+      <div class="approval-name">${esc(student.nama)}</div>
+      <div class="approval-meta">
+        Menyimpan ke database...
+      </div>
+    </div>
+  `;
+
+  try{
+    const result=await authCall(
+      'attendance',
+      {
+        id:student.id,
+        status:'HADIR',
+        keterangan:'ACC Guru Piket'
+      }
+    );
+
+    if(!result.success){
+      showApprovalMessage(
+        result.duplicate?'SUDAH ABSEN':'GAGAL',
+        result.message||'Absensi gagal disimpan.',
+        false
+      );
+
+      setTimeout(resetScanner,1400);
+      return;
+    }
+
+    // Tampilan sukses sesuai desain yang diminta.
+    showSuccessAttendance(
+      result.student,
+      result.status,
+      result.jam
+    );
+
+    // Dashboard layar siswa akan mendapatkan data melalui cache live.
+    setTimeout(resetScanner,1600);
+
+  }catch(e){
+    showApprovalMessage(
+      'GAGAL MENYIMPAN',
+      e.message||'Koneksi ke server gagal.',
+      false
+    );
+
+    setTimeout(resetScanner,1600);
+  }
+}
+
+function showSuccessAttendance(student,status,jam){
+  $('scanCard').classList.remove('hidden');
+
+  $('scanCard').innerHTML=`
+    <div class="approval-card scan-success">
+      <div class="display-check" style="width:70px;height:70px;font-size:38px">
+        ✓
+      </div>
+
+      <div class="display-success">
+        ABSEN BERHASIL
+      </div>
+
+      <div class="approval-name">
+        ${esc(student.nama)}
+      </div>
+
+      <div class="display-status">
+        ${esc(status)} • Pukul ${esc(jam)}
+      </div>
+
+      <div class="display-sub">
+        ✓ Data berhasil disimpan
+      </div>
+
+      <div class="display-sub">
+        <i>Siap melakukan scan berikutnya...</i>
+      </div>
+    </div>
+  `;
+}
+
+function rejectAttendance(){
+  APP.pendingStudent=null;
+  $('scanCard').classList.add('hidden');
+  APP.scanBusy=false;
+  startCamera();
+}
+
+async function resetScanner(){
+  APP.pendingStudent=null;
+  $('scanCard').classList.add('hidden');
+  APP.scanBusy=false;
+  await startCamera();
+}
+
 
 /* =========================
    DASHBOARD
@@ -1365,6 +1520,132 @@ function generateQR(){
         }
       );
     });
+}
+
+/* =========================
+   STUDENT DISPLAY
+========================= */
+function updateDisplayClock(){
+  const now=new Date();
+  $('displayClock').textContent=
+    now.toLocaleTimeString('id-ID',{
+      hour:'2-digit',
+      minute:'2-digit',
+      second:'2-digit',
+      hour12:false
+    });
+}
+
+async function loadLiveDisplay(){
+  if($('page-display').classList.contains('hide'))return;
+
+  try{
+    const result=await authCall('live');
+
+    if(!result.success)return;
+
+    const feed=result.feed||[];
+
+    if(feed.length){
+      const latest=feed[0];
+
+      if(latest.idAbsensi!==APP.lastDisplayId){
+        APP.lastDisplayId=latest.idAbsensi;
+        showLiveLatest(latest);
+      }
+
+      $('displayQueue').innerHTML=
+        feed.slice(0,8).map(x=>`
+          <div class="queue-row">
+            <div>
+              <div class="queue-name">${esc(x.nama)}</div>
+              <div class="queue-meta">
+                Kelas ${esc(x.kelas)} ${esc(x.rombel)}
+              </div>
+            </div>
+            <div>
+              <span class="badge ${String(x.status).toLowerCase()}">
+                ${esc(x.status)}
+              </span>
+              <div class="queue-meta" style="text-align:right;margin-top:3px">
+                ${esc(x.jam)}
+              </div>
+            </div>
+          </div>
+        `).join('');
+    }
+  }catch(e){
+    // Layar siswa tidak mengganggu proses scanner bila polling gagal.
+  }
+}
+
+function showLiveLatest(x){
+  $('studentDisplay').innerHTML=`
+    <div class="scan-success">
+      <div class="display-check">✓</div>
+
+      <div class="display-success">
+        ABSEN BERHASIL
+      </div>
+
+      <div class="display-name">
+        ${esc(x.nama)}
+      </div>
+
+      <div class="display-status">
+        ${esc(x.status)} • Pukul ${esc(x.jam)}
+      </div>
+
+      <div class="display-sub">
+        ✓ Data berhasil disimpan
+      </div>
+
+      <div class="display-sub">
+        <i>Selamat datang di SMP Negeri 3 Kalipare</i>
+      </div>
+    </div>
+  `;
+
+  // Kembali ke layar menunggu setelah beberapa detik,
+  // sementara daftar absensi tetap terlihat.
+  clearTimeout(window.displayResetTimer);
+
+  window.displayResetTimer=setTimeout(()=>{
+    $('studentDisplay').innerHTML=`
+      <div>
+        <div style="font-size:52px;margin-bottom:12px">✓</div>
+        <div class="display-success">SISTEM ABSENSI AKTIF</div>
+        <div class="display-name">Menunggu siswa...</div>
+        <div class="display-sub">
+          Siswa yang telah di-ACC Guru Piket akan tampil di sini.
+        </div>
+      </div>
+    `;
+  },5000);
+}
+
+function startDisplayPolling(){
+  clearInterval(APP.displayTimer);
+  updateDisplayClock();
+  APP.displayTimer=setInterval(()=>{
+    updateDisplayClock();
+    loadLiveDisplay();
+  },1500);
+}
+
+function stopDisplayPolling(){
+  clearInterval(APP.displayTimer);
+  APP.displayTimer=null;
+}
+
+function toggleDisplayFullscreen(){
+  document.body.classList.toggle('fullscreen-display');
+
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen?.().catch(()=>{});
+  }else{
+    document.exitFullscreen?.().catch(()=>{});
+  }
 }
 
 /* =========================
