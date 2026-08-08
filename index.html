@@ -155,8 +155,23 @@ textarea{min-height:100px;resize:vertical}
  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.qr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.topbar h1{font-size:21px}.card{padding:14px}
 }
 @media print{
- .sidebar,.topbar,.mobile-nav,.no-print{display:none!important}.main{margin:0;padding:0}.card{box-shadow:none}.qr-grid{grid-template-columns:repeat(3,1fr)}
+  @page{size:A4 portrait;margin:12mm}
+  body{background:#fff!important;color:#111!important}
+  .sidebar,.topbar,.mobile-nav,.no-print{display:none!important}
+  .main{margin:0!important;padding:0!important;max-width:none!important}
+  .page{display:none!important}
+  #page-rekap{display:block!important}
+  .print-report-header{display:block!important}
+  .report-card{box-shadow:none!important;border:1px solid #d0d5dd!important;break-inside:avoid}
+  .report-table{font-size:10px!important}
+  .report-section{break-inside:avoid;margin-bottom:12px}
+  .report-title{font-size:18px!important}
+  .report-summary-table td,.report-summary-table th{padding:5px!important}
+  .report-analysis td,.report-analysis th{padding:5px!important}
+  .print-only{display:block!important}
 }
+.print-report-header{display:none}
+.print-only{display:none}
 </style>
 </head>
 
@@ -275,45 +290,157 @@ textarea{min-height:100px;resize:vertical}
     </section>
 
     <section id="page-rekap" class="page hide">
-      <div class="card">
+      <div class="card no-print">
         <div class="two grid">
-          <div><label>Tanggal</label><input type="date" id="reportDate"></div>
-          <div style="display:flex;align-items:end;gap:8px">
-            <button class="btn primary" onclick="loadReport()">Tampilkan</button>
-            <button class="btn dark" onclick="exportCsv()">Export CSV</button>
+          <div>
+            <label>Tanggal Rekap Harian</label>
+            <input type="date" id="reportDate">
+          </div>
+          <div>
+            <label>Bulan Rekap Per Siswa</label>
+            <input type="month" id="monthInput">
           </div>
         </div>
-      </div>
-      <div class="card">
-        <h3>Rekap Harian</h3>
-        <div class="tablewrap">
-          <table class="table">
-            <thead><tr><th>Nama</th><th>Kelas</th><th>Jam</th><th>Status</th><th>Keterangan</th><th>Aksi</th></tr></thead>
-            <tbody id="reportBody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Rekap Bulanan</h3>
-        <div class="two grid">
-          <input type="month" id="monthInput">
-          <button class="btn primary" onclick="loadMonthly()">Tampilkan</button>
-        </div>
-        <div class="tablewrap">
-          <table class="table">
-            <thead><tr><th>Nama</th><th>Kelas</th><th>Hadir</th><th>Terlambat</th><th>Izin</th><th>Sakit</th><th>Alpa</th></tr></thead>
-            <tbody id="monthlyBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
 
-    <section id="page-qr" class="page hide">
-      <div class="card no-print">
-        <button class="btn primary" onclick="generateQR()">Generate Semua QR</button>
-        <button class="btn dark" onclick="window.print()">Cetak Kartu</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn primary" onclick="loadFullReport()">
+            Tampilkan Rekap
+          </button>
+          <button class="btn dark" onclick="printAttendancePDF()">
+            Cetak / Simpan PDF
+          </button>
+        </div>
       </div>
-      <div id="qrGrid" class="qr-grid"></div>
+
+      <div id="reportPrintArea">
+
+        <div class="print-report-header" style="text-align:center;margin-bottom:14px">
+          <div style="font-size:20px;font-weight:900">
+            SMP NEGERI 3 KALIPARE
+          </div>
+          <div style="font-size:15px;font-weight:800">
+            LAPORAN REKAP ABSENSI SISWA
+          </div>
+          <div id="printReportPeriod" style="font-size:12px;color:#667085;margin-top:4px"></div>
+        </div>
+
+        <!-- RINGKASAN -->
+        <div class="card report-card report-section">
+          <h3 class="report-title">Ringkasan Absensi</h3>
+
+          <div class="tablewrap">
+            <table class="table report-table report-summary-table">
+              <thead>
+                <tr>
+                  <th>Indikator</th>
+                  <th style="text-align:right">Hasil</th>
+                </tr>
+              </thead>
+              <tbody id="summaryBody">
+                <tr><td colspan="2">Pilih tanggal lalu klik Tampilkan Rekap.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- REKAP PER SISWA -->
+        <div class="card report-card report-section">
+          <h3 class="report-title">Rekap Per Siswa</h3>
+
+          <div class="tablewrap">
+            <table class="table report-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Siswa</th>
+                  <th>Kelas</th>
+                  <th>Status</th>
+                  <th>Keterangan</th>
+                  <th>Jam Absen</th>
+                </tr>
+              </thead>
+              <tbody id="dailyReportBody">
+                <tr><td colspan="6">Belum ada data.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- REKAP KELAS -->
+        <div class="card report-card report-section">
+          <h3 class="report-title">Rekap Berdasarkan Kelas</h3>
+
+          <div class="tablewrap">
+            <table class="table report-table">
+              <thead>
+                <tr>
+                  <th>Kelas</th>
+                  <th>Jumlah Siswa Absen</th>
+                  <th>Hadir</th>
+                  <th>Izin</th>
+                  <th>Sakit</th>
+                  <th>Alpa</th>
+                  <th>Kehadiran</th>
+                </tr>
+              </thead>
+              <tbody id="classReportBody">
+                <tr><td colspan="7">Belum ada data.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ANALISIS -->
+        <div class="card report-card report-section">
+          <h3 class="report-title">Analisis Sederhana</h3>
+
+          <div class="tablewrap">
+            <table class="table report-table report-analysis">
+              <thead>
+                <tr>
+                  <th>Aspek Analisis</th>
+                  <th>Hasil</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody id="analysisBody">
+                <tr><td colspan="3">Belum ada data.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- REKAP BULANAN -->
+        <div class="card report-card report-section">
+          <h3 class="report-title">
+            Rekap Kehadiran Per Siswa
+            <span id="monthlyReportTitle"></span>
+          </h3>
+
+          <div class="tablewrap">
+            <table class="table report-table">
+              <thead>
+                <tr>
+                  <th>Nama Siswa</th>
+                  <th>Kelas</th>
+                  <th>Hadir</th>
+                  <th>Izin</th>
+                  <th>Sakit</th>
+                  <th>Alpa</th>
+                  <th>Terlambat</th>
+                  <th>Total Hari</th>
+                  <th>% Kehadiran</th>
+                  <th>Kategori</th>
+                </tr>
+              </thead>
+              <tbody id="monthlyReportBody">
+                <tr><td colspan="10">Belum ada data.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
     </section>
 
     <section id="page-display" class="page hide">
@@ -618,7 +745,7 @@ function openPage(name){
   }
 
   if(name==='dashboard')loadDashboard();
-  if(name==='rekap')loadReport();
+  if(name==='rekap')loadFullReport();
   if(name==='logs')loadLogs();
 
   if(name==='display'){
@@ -1357,47 +1484,174 @@ async function importCsv(input){
    REPORT
 ========================= */
 async function loadReport(){
+  await loadFullReport();
+}
+
+function pct(v){
+  const n=Number(v||0);
+  return n.toLocaleString('id-ID',{
+    minimumFractionDigits:n%1?2:0,
+    maximumFractionDigits:2
+  })+'%';
+}
+
+function statusBadge(status){
+  const cls=String(status||'').toLowerCase();
+  return `<span class="badge ${cls}">${esc(status||'-')}</span>`;
+}
+
+async function loadFullReport(){
   busy(true);
 
   try{
-    const result=
-      await authCall(
-        'report',
-        {
-          date:$('reportDate').value
-        }
-      );
+    const date=$('reportDate').value||today();
+    const month=$('monthInput').value||date.slice(0,7);
 
-    $('reportBody').innerHTML=
-      result.report.map(x=>`
-        <tr>
-          <td>${esc(x.nama)}</td>
-          <td>${esc(x.kelas)} ${esc(x.rombel)}</td>
-          <td>${esc(x.jam)}</td>
-          <td>
-            <span class="badge ${x.status.toLowerCase()}">
-              ${esc(x.status)}
-            </span>
-          </td>
-          <td>${esc(x.keterangan)}</td>
-          <td>
-            <button class="btn danger"
-              onclick="deleteAttendance('${esc(x.idAbsensi)}')">
-              Hapus
-            </button>
-          </td>
-        </tr>
-      `).join('')||
-      `<tr>
-        <td colspan="6">
-          Tidak ada data.
-        </td>
-      </tr>`;
+    const result=await authCall(
+      'reportFull',
+      {date,month}
+    );
+
+    if(!result.success){
+      notify(result.message||'Rekap gagal dimuat.');
+      return;
+    }
+
+    renderFullReport(result);
   }catch(e){
     notify(e.message);
   }finally{
     busy(false);
   }
+}
+
+function renderFullReport(r){
+  const s=r.summary||{};
+
+  $('printReportPeriod').textContent=
+    'Tanggal: '+esc(r.dateLabel)+
+    ' • Rekap bulanan: '+esc(r.monthLabel);
+
+  $('summaryBody').innerHTML=`
+    <tr>
+      <td>Total data absensi</td>
+      <td style="text-align:right"><b>${s.totalData} siswa</b></td>
+    </tr>
+    <tr>
+      <td>Hadir</td>
+      <td style="text-align:right"><b>${s.hadir} siswa (${pct(s.totalData?((s.hadir/s.totalData)*100):0)})</b></td>
+    </tr>
+    <tr>
+      <td>Izin</td>
+      <td style="text-align:right">${s.izin} siswa (${pct(s.totalData?((s.izin/s.totalData)*100):0)})</td>
+    </tr>
+    <tr>
+      <td>Sakit</td>
+      <td style="text-align:right">${s.sakit} siswa (${pct(s.totalData?((s.sakit/s.totalData)*100):0)})</td>
+    </tr>
+    <tr>
+      <td>Alpa</td>
+      <td style="text-align:right">${s.alpa} siswa (${pct(s.totalData?((s.alpa/s.totalData)*100):0)})</td>
+    </tr>
+    <tr>
+      <td>Tingkat kehadiran</td>
+      <td style="text-align:right"><b>${pct(s.attendanceRate)}</b></td>
+    </tr>
+    <tr>
+      <td>Tanggal</td>
+      <td style="text-align:right"><b>${esc(r.dateLabel)}</b></td>
+    </tr>
+  `;
+
+  $('dailyReportBody').innerHTML=
+    (r.daily||[]).map((x,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td><b>${esc(x.nama)}</b></td>
+        <td>${esc(x.kelas)} ${esc(x.rombel)}</td>
+        <td>${statusBadge(x.status)}</td>
+        <td>${esc(x.keterangan||'-')}</td>
+        <td>${esc(x.jam)}</td>
+      </tr>
+    `).join('')||
+    `<tr><td colspan="6">Tidak ada data absensi pada tanggal tersebut.</td></tr>`;
+
+  const classes=r.perKelas||[];
+
+  let totalClass={
+    jumlah:0,hadir:0,izin:0,sakit:0,alpa:0
+  };
+
+  $('classReportBody').innerHTML=
+    classes.map(x=>{
+      totalClass.jumlah+=x.jumlah;
+      totalClass.hadir+=x.hadir;
+      totalClass.izin+=x.izin;
+      totalClass.sakit+=x.sakit;
+      totalClass.alpa+=x.alpa;
+
+      return `
+        <tr>
+          <td><b>${esc(x.kelas)}</b></td>
+          <td style="text-align:right">${x.jumlah}</td>
+          <td style="text-align:right">${x.hadir}</td>
+          <td style="text-align:right">${x.izin}</td>
+          <td style="text-align:right">${x.sakit}</td>
+          <td style="text-align:right">${x.alpa}</td>
+          <td style="text-align:right"><b>${pct(x.kehadiran)}</b></td>
+        </tr>
+      `;
+    }).join('')+
+    `
+      <tr style="font-weight:900;background:#f9fafb">
+        <td>TOTAL</td>
+        <td style="text-align:right">${totalClass.jumlah}</td>
+        <td style="text-align:right">${totalClass.hadir}</td>
+        <td style="text-align:right">${totalClass.izin}</td>
+        <td style="text-align:right">${totalClass.sakit}</td>
+        <td style="text-align:right">${totalClass.alpa}</td>
+        <td style="text-align:right"><b>${pct(
+          totalClass.jumlah
+          ? ((totalClass.hadir)/totalClass.jumlah)*100
+          : 0
+        )}</b></td>
+      </tr>
+    `;
+
+  $('analysisBody').innerHTML=
+    (r.analysis||[]).map(x=>`
+      <tr>
+        <td><b>${esc(x.aspek)}</b></td>
+        <td><b>${esc(x.hasil)}</b></td>
+        <td>${esc(x.keterangan)}</td>
+      </tr>
+    `).join('');
+
+  $('monthlyReportTitle').textContent=
+    ' — '+esc(r.monthLabel);
+
+  $('monthlyReportBody').innerHTML=
+    (r.monthlyStudents||[]).map(x=>`
+      <tr>
+        <td><b>${esc(x.nama)}</b></td>
+        <td>${esc(x.kelas)} ${esc(x.rombel)}</td>
+        <td>${x.hadir}</td>
+        <td>${x.izin}</td>
+        <td>${x.sakit}</td>
+        <td>${x.alpa}</td>
+        <td>${x.terlambat}</td>
+        <td>${x.totalHari}</td>
+        <td><b>${pct(x.percent)}</b></td>
+        <td><b>${esc(x.kategori)}</b></td>
+      </tr>
+    `).join('')||
+    `<tr><td colspan="10">Belum ada data bulanan.</td></tr>`;
+}
+
+function printAttendancePDF(){
+  // Browser print dialog menyediakan pilihan "Save as PDF".
+  // CSS @media print sudah menyiapkan format A4 dan menyembunyikan menu aplikasi.
+  window.print();
 }
 
 async function deleteAttendance(id){
@@ -1411,7 +1665,7 @@ async function deleteAttendance(id){
       {id}
     );
 
-    await loadReport();
+    await loadFullReport();
     await loadDashboard();
   }catch(e){
     notify(e.message);
@@ -1445,35 +1699,9 @@ async function exportCsv(){
 }
 
 async function loadMonthly(){
-  busy(true);
-
-  try{
-    const result=
-      await authCall(
-        'monthly',
-        {
-          month:$('monthInput').value
-        }
-      );
-
-    $('monthlyBody').innerHTML=
-      result.data.map(x=>`
-        <tr>
-          <td>${esc(x.nama)}</td>
-          <td>${esc(x.kelas)} ${esc(x.rombel)}</td>
-          <td>${x.HADIR}</td>
-          <td>${x.TERLAMBAT}</td>
-          <td>${x.IZIN}</td>
-          <td>${x.SAKIT}</td>
-          <td>${x.ALPA}</td>
-        </tr>
-      `).join('');
-  }catch(e){
-    notify(e.message);
-  }finally{
-    busy(false);
-  }
+  await loadFullReport();
 }
+
 
 /* =========================
    QR CARD
