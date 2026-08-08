@@ -309,6 +309,13 @@ textarea{min-height:100px;resize:vertical}
           <button class="btn dark" onclick="printAttendancePDF()">
             Cetak / Simpan PDF
           </button>
+          <button class="btn light" onclick="exportCsv()">
+            Export CSV
+          </button>
+        </div>
+
+        <div class="no-print" style="margin-top:10px;color:#667085;font-size:12px">
+          Export CSV menghasilkan data absensi sesuai tanggal yang dipilih dan dapat dibuka di Microsoft Excel atau Google Sheets.
         </div>
       </div>
 
@@ -1686,11 +1693,19 @@ async function exportCsv(){
         }
       );
 
+    if(!result || !result.success){
+      throw new Error(
+        result?.message || 'Export CSV gagal.'
+      );
+    }
+
     download(
       result.filename,
       result.content,
       'text/csv;charset=utf-8'
     );
+
+    notify('CSV berhasil dibuat.');
   }catch(e){
     notify(e.message);
   }finally{
